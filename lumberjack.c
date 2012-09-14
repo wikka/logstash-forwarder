@@ -21,7 +21,7 @@ typedef enum {
   opt_help = 'h',
   opt_version = 'v',
   opt_field,
-  opt_redis,
+  opt_address,
 
   /* Security options */
   opt_ssl_ca_path,
@@ -50,12 +50,14 @@ static struct option_doc options[] = {
     "Add a custom key-value mapping to every line emitted" },
 
   /* ssl certificate and key, optional */
+  { "ssl-ca-path", required_argument, opt_ssl_ca_path,
+    "the path to the ssl ca file or directory" },
   { "ssl-certificate", required_argument, opt_ssl_certificate,
     "set the path to the ssl certificate to use" },
   { "ssl-key", required_argument, opt_ssl_key,
     "set the path to the ssl key to use" },
 
-  { "redis", required_argument, opt_redis,
+  { "address", required_argument, opt_address,
     "the address to use when talking to redis (can be 'host', 'host:port', " \
     "or 'path/to/unix_socket'" },
   { NULL, 0, 0, NULL },
@@ -172,7 +174,7 @@ int main(int argc, char **argv) {
       case opt_help:
         usage(argv[0]);
         return 0;
-      case opt_redis:
+      case opt_address:
         emitter_config.redis_address = strdup(optarg);
         break;
       case opt_field:
@@ -211,29 +213,31 @@ int main(int argc, char **argv) {
     valid_options = 0;
   }
 
-  /* Are any ssl options set? If so, require all of them. */
-  if (emitter_config.ssl_ca_path || emitter_config.ssl_certificate \
-      || emitter_config.ssl_key) {
+  /* Are any ssl options set? If so, require ssl ca at minimum*/
+  if (emitter_config.ssl_certificate || emitter_config.ssl_key) {
     /* Require all options */
     if (emitter_config.ssl_ca_path == NULL) {
-      printf("Missing --ssl-ca-path (all ssl options are required)\n");
+      printf("Missing --ssl-ca-path (required for ssl)\n");
       valid_options = 0;
     }
+    //if (emitter_config.ssl_certificate == NULL) {
+      //printf("Missing --ssl-certificate (all ssl options are required)\n");
+      //valid_options = 0;
+    //}
 
-    if (emitter_config.ssl_certificate == NULL) {
-      printf("Missing --ssl-certificate (all ssl options are required)\n");
-      valid_options = 0;
-    }
-
-    if (emitter_config.ssl_key == NULL) {
-      printf("Missing --ssl-key (all ssl options are required)\n");
-      valid_options = 0;
-    }
+    //if (emitter_config.ssl_key == NULL) {
+      //printf("Missing --ssl-key (all ssl options are required)\n");
+      //valid_options = 0;
+    //}
   }
 
   if (!valid_options) {
     usage(argv[0]);
     return 1;
+  }
+
+  if (emitter_config.stunnel_path == NULL) {
+    emitter_config.stunnel_path = "./build/bin/stunnel.sh";
   }
 
   argc -= optind;
