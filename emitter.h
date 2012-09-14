@@ -4,10 +4,13 @@
 struct emitter_config {
   void *zmq; /* zmq context */
   char *zmq_endpoint; /* inproc://whatever */
-  char *ssl_ca_path; /* path to trusted ssl ca, can be a directory or a file */
 
-  char *host;
-  short port;
+  /* The address to talk to redis on. Can be a host:port or /path/to/socket.
+   * If the address has a "/" in it, it is assumed to be a unix socket path.
+   * Otherwise, it is assumed to be an internet address. */
+  //int redis_db;
+  char *redis_key;
+  char *redis_address; 
 };
 
 void *emitter(void *arg);

@@ -2,7 +2,8 @@ VERSION=0.0.6
 
 # By default, all dependencies (zeromq, etc) will be downloaded and installed
 # locally. You can change this if you are deploying your own.
-VENDOR?=zeromq jemalloc openssl zlib
+VENDOR?=zeromq jemalloc hiredis
+#openssl zlib hiredis
 
 # Where to install to.
 PREFIX?=/opt/lumberjack
@@ -13,7 +14,8 @@ CFLAGS+=-D_POSIX_C_SOURCE=199309 -std=c99 -Wall -Wextra -Werror -pipe
 CFLAGS+=-g
 CFLAGS+=-Wno-unused-function
 LDFLAGS+=-pthread
-LIBS=-lzmq -ljemalloc -lssl -lcrypto -luuid -lz
+#LIBS=-lzmq -ljemalloc -lssl -lcrypto -luuid -lz
+LIBS=-lzmq -ljemalloc -luuid -lz -lhiredis
 
 CFLAGS+=-Ibuild/include 
 LDFLAGS+=-Lbuild/lib -Wl,-rpath,'$$ORIGIN/../lib'
@@ -37,6 +39,7 @@ vendor-clean:
 	-make -C vendor/libuuid/ clean
 	-make -C vendor/zeromq/ clean
 	-make -C vendor/zlib/ clean
+	-make -C vendor/hiredis/ clean
 
 rpm deb: | build-all
 	fpm -s dir -t $@ -n lumberjack -v $(VERSION) --prefix /opt/lumberjack \
@@ -45,17 +48,12 @@ rpm deb: | build-all
 		--url "https://github.com/jordansissel/lumberjack" \
 		bin/lumberjack bin/lumberjack.sh lib
 
-#install: build/bin/lumberjack build/lib/libzmq.$(LIBEXT)
-# install -d -m 755 build/bin/* $(PREFIX)/bin/lumberjack
-# install -d build/lib/* $(PREFIX)/lib
-
 backoff.o: backoff.c backoff.h
 harvester.o: harvester.c harvester.h proto.h str.h sleepdefs.h
-emitter.o: emitter.c emitter.h ring.h sleepdefs.h
+emitter.o: emitter.c emitter.h sleepdefs.h
 lumberjack.o: lumberjack.c backoff.h harvester.h emitter.h
 str.o: str.c str.h
 proto.o: proto.c proto.h str.h sleepdefs.h
-ring.o: ring.c ring.h
 
 harvester.o: build/include/insist.h 
 lumberjack.o: build/include/insist.h 
@@ -70,7 +68,7 @@ build/bin/lumberjack: | build/bin build/lib/libzmq.$(LIBEXT)
 endif # zeromq
 
 ifeq ($(filter jemalloc,$(VENDOR)),jemalloc)
-harvester.o lumberjack.o ring.o str.o: build/include/jemalloc/jemalloc.h
+harvester.o lumberjack.o str.o: build/include/jemalloc/jemalloc.h
 build/bin/lumberjack: | build/lib/libjemalloc.$(LIBEXT)
 endif # jemalloc
 
@@ -86,20 +84,16 @@ proto.o: build/include/zlib.h
 build/bin/lumberjack: | build/lib/libz.$(LIBEXT)
 endif # zlib
 
-.PHONY: test
-test: | build/test/test_ring
-	build/test/test_ring
-
-# Tests
-test_ring.o: ring.h build/include/jemalloc/jemalloc.h build/include/insist.h
-build/test/test_ring: test_ring.o ring.o  | build/test
-	$(CC) $(LDFLAGS) -o $@ $^ -ljemalloc
+ifeq ($(filter hiredis,$(VENDOR)),hiredis)
+emitter.o: build/include/hiredis/hiredis.h
+build/bin/lumberjack: | build/lib/libhiredis.$(LIBEXT)
+endif # hiredis
 
 build/bin/lumberjack.sh: lumberjack.sh | build/bin
 	install -m 755 $^ $@
 
 build/bin/lumberjack: | build/bin
-build/bin/lumberjack: lumberjack.o backoff.o harvester.o emitter.o str.o proto.o ring.o
+build/bin/lumberjack: lumberjack.o backoff.o harvester.o emitter.o str.o proto.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	@echo " => Build complete: $@"
 	@echo " => Run 'make rpm' to build an rpm (or deb or tarball)"
@@ -130,6 +124,10 @@ build/include/zlib.h build/lib/libz.$(LIBEXT): | build
 build/include/openssl/ssl.h build/lib/libssl.$(LIBEXT) build/lib/libcrypto.$(LIBEXT): | build
 	@echo " => Building openssl"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/openssl install PREFIX=$$PWD/build DEBUG=$(DEBUG)
+
+build/include/hiredis/hiredis.h build/lib/libhiredis.$(LIBEXT):
+	@echo " => Building libhiredis"
+	PATH=$$PWD:$$PATH $(MAKE) -C vendor/hiredis install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
 build:
 	mkdir $@

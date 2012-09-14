@@ -21,9 +21,9 @@ typedef enum {
   opt_help = 'h',
   opt_version = 'v',
   opt_field,
-  opt_ssl_ca_path,
-  opt_host,
-  opt_port,
+  //opt_ssl_ca_path,
+  opt_address,
+  //opt_port,
 } optlist_t;
 
 struct option_doc {
@@ -51,15 +51,9 @@ static struct option_doc options[] = {
   //{ "ssl-key", required_argument, NULL, opt_ssl_key },
   /* TODO(sissel): How to provide key passphrase/credentials? */
 
-  /* What cert authority to trust. This can be the path to a single self-signed
-   * certificate if you choose. */
-  { "ssl-ca-path", required_argument, opt_ssl_ca_path, 
-    "Set the trusted cert/ca path for lumberjack's ssl client. " \
-    "Can be a file or a directory." },
-  { "host", required_argument, opt_host,
-    "The hostname to send lumberjack messages to" },
-  { "port", required_argument, opt_port,
-    "The port to connect on" },
+  { "address", required_argument, opt_address,
+    "the address to use when talking to redis (can be 'host', 'host:port', " \
+    "or 'path/to/unix_socket'" },
   { NULL, 0, 0, NULL },
 };
 
@@ -134,7 +128,8 @@ int main(int argc, char **argv) {
 
   /* defaults */
   memset(&emitter_config, 0, sizeof(struct emitter_config));
-  emitter_config.port = 5001;
+  //emitter_config.port = 5001;
+  emitter_config.redis_key = "lumberjack";
   
   /* convert the 'option_doc' array into a 'struct option' array 
    * for use with getopt_long_only */
@@ -154,21 +149,21 @@ int main(int argc, char **argv) {
   while (i = -1, c = getopt_long_only(argc, argv, "+hv", getopt_options, &i), c != -1) {
     /* TODO(sissel): handle args */
     switch (c) {
-      case opt_ssl_ca_path:
-        emitter_config.ssl_ca_path = strdup(optarg);
-        break;
+      //case opt_ssl_ca_path:
+        //emitter_config.ssl_ca_path = strdup(optarg);
+        //break;
       case opt_version:
         printf("version unknown. Could be awesome.\n");
         break;
       case opt_help:
         usage(argv[0]);
         return 0;
-      case opt_host:
-        emitter_config.host = strdup(optarg);
+      case opt_address:
+        emitter_config.redis_address = strdup(optarg);
         break;
-      case opt_port:
-        emitter_config.port = (short)atoi(optarg);
-        break;
+      //case opt_port:
+        //emitter_config.port = (short)atoi(optarg);
+        //break;
       case opt_field:
         tmp = strchr(optarg, '=');
         if (tmp == NULL) {
@@ -199,14 +194,8 @@ int main(int argc, char **argv) {
   }
   free(getopt_options);
 
-  if (emitter_config.host == NULL) {
-    printf("Missing --host flag\n");
-    usage(argv[0]);
-    return 1;
-  }
-
-  if (emitter_config.port == 0) {
-    printf("Missing --port flag\n");
+  if (emitter_config.redis_address == NULL) {
+    printf("Missing --address flag\n");
     usage(argv[0]);
     return 1;
   }

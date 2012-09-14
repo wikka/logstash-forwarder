@@ -10,11 +10,11 @@ $(WORKDIR): $(TARBALL)
 	tar $(TARFLAGS) -xf $<
 	mv antirez-hiredis-* $@
 
-configure: 
+configure: | workdir
 	@# nothing to do
 
 compile: | $(WORKDIR)/libhiredis.so
-$(WORKDIR)/libhiredis.so:
+$(WORKDIR)/libhiredis.so: | configure
 	$(MAKE) -C $(WORKDIR)
 
 install: | compile $(PREFIX)/lib $(PREFIX)/include
