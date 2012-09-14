@@ -21,9 +21,12 @@ typedef enum {
   opt_help = 'h',
   opt_version = 'v',
   opt_field,
-  //opt_ssl_ca_path,
   opt_address,
-  //opt_port,
+
+  /* Security options */
+  opt_ssl_ca_path,
+  opt_ssl_cert,
+  opt_ssl_key,
 } optlist_t;
 
 struct option_doc {
