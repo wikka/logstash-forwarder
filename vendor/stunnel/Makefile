@@ -14,10 +14,6 @@ CFLAGS=-I$(PREFIX)/include
 LDFLAGS=-L$(PREFIX)/lib 
 CXXFLAGS=-I$(PREFIX)/include
 
-# Disable eliptic-curve stuff because I can't figure out how to get openssl
-# to build with it. Can fix this later.
-CFLAGS+=-DOPENSSL_NO_ECDH
-
 configure: | $(WORKDIR)/Makefile
 $(WORKDIR)/Makefile: | $(WORKDIR) 
 $(WORKDIR)/Makefile: $(PREFIX)/lib/libcrypto.$(LIBEXT) $(PREFIX)/lib/libssl.$(LIBEXT)

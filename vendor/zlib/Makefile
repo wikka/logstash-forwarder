@@ -24,8 +24,8 @@ install:
 $(PREFIX)/lib/libz.$(LIBEXT).$(VERSION): $(WORKDIR)/libz.$(LIBEXT).$(VERSION)
 	cp $^ $@
 
-$(PREFIX)/lib/libz.$(LIBEXT): $(PREFIX)/lib/libz.$(LIBEXT).$(VERSION)
-	ln -sf libz.$(LIBEXT).$(VERSION) $(PREFIX)/lib/libz.$(LIBEXT)
+$(PREFIX)/lib/libz.$(LIBEXT) $(PREFIX)/lib/libz.$(LIBEXT).1: | $(PREFIX)/lib/libz.$(LIBEXT).$(VERSION)
+	ln -sf libz.$(LIBEXT).$(VERSION) $@
 
 $(PREFIX)/include/zlib.h:
 	cp $(WORKDIR)/zlib.h $(PREFIX)/include
