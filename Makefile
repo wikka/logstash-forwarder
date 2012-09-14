@@ -22,6 +22,7 @@ LDFLAGS+=-Lbuild/lib -Wl,-rpath,'$$ORIGIN/../lib'
 
 default: build-all
 build-all: build/bin/lumberjack build/bin/lumberjack.sh
+build-all: build/bin/stunnel build/bin/stunnel.sh
 include Makefile.ext
 
 ifeq ($(UNAME),Linux)
@@ -101,36 +102,40 @@ build/bin/lumberjack: lumberjack.o backoff.o harvester.o emitter.o str.o proto.o
 build/include/insist.h: | build/include
 	PATH=$$PWD:$$PATH fetch.sh -o $@ https://raw.github.com/jordansissel/experiments/master/c/better-assert/insist.h
 
-build/include/zmq.h build/lib/libzmq.$(LIBEXT): | build
+build/include/zmq.h build/lib/libzmq.$(LIBEXT): | build/include build/lib
 	@echo " => Building zeromq"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/zeromq/ install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/msgpack.h build/lib/libmsgpack.$(LIBEXT): | build
+build/include/msgpack.h build/lib/libmsgpack.$(LIBEXT): | build/include build/lib
 	@echo " => Building msgpack"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/msgpack/ install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/jemalloc/jemalloc.h build/lib/libjemalloc.$(LIBEXT): | build
+build/include/jemalloc/jemalloc.h build/lib/libjemalloc.$(LIBEXT): | build/include build/lib
 	@echo " => Building jemalloc"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/jemalloc/ install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/lz4.h build/lib/liblz4.$(LIBEXT): | build
+build/include/lz4.h build/lib/liblz4.$(LIBEXT): | build/include build/lib
 	@echo " => Building lz4"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/lz4/ install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/zlib.h build/lib/libz.$(LIBEXT): | build
+build/include/zlib.h build/lib/libz.$(LIBEXT): | build/include build/lib
 	@echo " => Building zlib"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/zlib/ install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/openssl/ssl.h build/lib/libssl.$(LIBEXT) build/lib/libcrypto.$(LIBEXT): | build
+build/include/openssl/ssl.h build/lib/libssl.$(LIBEXT) build/lib/libcrypto.$(LIBEXT): | build/include build/lib
 	@echo " => Building openssl"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/openssl install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/include/hiredis/hiredis.h build/lib/libhiredis.$(LIBEXT):
+build/include/hiredis/hiredis.h build/lib/libhiredis.$(LIBEXT): | build/include build/lib
 	@echo " => Building libhiredis"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/hiredis install PREFIX=$$PWD/build DEBUG=$(DEBUG)
+
+build/bin/stunnel: | build/bin build/lib
+	@echo " => Building stunnel"
+	PATH=$$PWD:$$PATH $(MAKE) -C vendor/stunnel install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
 build:
 	mkdir $@
 
-build/include build/bin build/test: | build
+build/include build/bin build/test build/lib: | build
 	mkdir $@
