@@ -21,7 +21,7 @@ typedef enum {
   opt_help = 'h',
   opt_version = 'v',
   opt_field,
-  opt_address,
+  opt_redis,
 
   /* Security options */
   opt_ssl_ca_path,
@@ -55,7 +55,7 @@ static struct option_doc options[] = {
   { "ssl-key", required_argument, opt_ssl_key,
     "set the path to the ssl key to use" },
 
-  { "address", required_argument, opt_address,
+  { "redis", required_argument, opt_redis,
     "the address to use when talking to redis (can be 'host', 'host:port', " \
     "or 'path/to/unix_socket'" },
   { NULL, 0, 0, NULL },
@@ -74,7 +74,7 @@ void usage(const char *prog) {
 
   printf("\n");
   printf("If you specify ssl options, an stunnel instance will be run as "
-         "child process provide the encryption.");
+         "child process provide the encryption.\n");
 } /* usage */
 
 void set_resource_limits(int file_count) {
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
       case opt_help:
         usage(argv[0]);
         return 0;
-      case opt_address:
+      case opt_redis:
         emitter_config.redis_address = strdup(optarg);
         break;
       case opt_field:
@@ -202,11 +202,36 @@ int main(int argc, char **argv) {
         usage(argv[0]);
         return 1;
     }
-  }
+  } /* option parsing */
   free(getopt_options);
 
+  int valid_options = 1; /* assume valid by default */
   if (emitter_config.redis_address == NULL) {
-    printf("Missing --address flag\n");
+    printf("Missing --redis flag\n");
+    valid_options = 0;
+  }
+
+  /* Are any ssl options set? If so, require all of them. */
+  if (emitter_config.ssl_ca_path || emitter_config.ssl_certificate \
+      || emitter_config.ssl_key) {
+    /* Require all options */
+    if (emitter_config.ssl_ca_path == NULL) {
+      printf("Missing --ssl-ca-path (all ssl options are required)\n");
+      valid_options = 0;
+    }
+
+    if (emitter_config.ssl_certificate == NULL) {
+      printf("Missing --ssl-certificate (all ssl options are required)\n");
+      valid_options = 0;
+    }
+
+    if (emitter_config.ssl_key == NULL) {
+      printf("Missing --ssl-key (all ssl options are required)\n");
+      valid_options = 0;
+    }
+  }
+
+  if (!valid_options) {
     usage(argv[0]);
     return 1;
   }
