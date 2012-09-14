@@ -25,7 +25,7 @@ typedef enum {
 
   /* Security options */
   opt_ssl_ca_path,
-  opt_ssl_cert,
+  opt_ssl_certificate,
   opt_ssl_key,
 } optlist_t;
 
@@ -49,10 +49,11 @@ static struct option_doc options[] = {
   { "field", required_argument, opt_field, 
     "Add a custom key-value mapping to every line emitted" },
 
-  /* ssl cert and key, optional */
-  //{ "ssl-certificate", required_argument, NULL, opt_ssl_certificate },
-  //{ "ssl-key", required_argument, NULL, opt_ssl_key },
-  /* TODO(sissel): How to provide key passphrase/credentials? */
+  /* ssl certificate and key, optional */
+  { "ssl-certificate", required_argument, opt_ssl_certificate,
+    "set the path to the ssl certificate to use" },
+  { "ssl-key", required_argument, opt_ssl_key,
+    "set the path to the ssl key to use" },
 
   { "address", required_argument, opt_address,
     "the address to use when talking to redis (can be 'host', 'host:port', " \
@@ -66,10 +67,14 @@ void usage(const char *prog) {
   for (int i = 0; options[i].name != NULL; i++) {
     printf("  --%s%s %.*s %s\n", options[i].name,
            options[i].has_arg ? " VALUE" : "",
-           (int)(20 - strlen(options[i].name) - (options[i].has_arg ? 6 : 0)),
+           (int)(25 - strlen(options[i].name) - (options[i].has_arg ? 6 : 0)),
            "                                   ",
            options[i].documentation);
   }
+
+  printf("\n");
+  printf("If you specify ssl options, an stunnel instance will be run as "
+         "child process provide the encryption.");
 } /* usage */
 
 void set_resource_limits(int file_count) {
@@ -152,9 +157,15 @@ int main(int argc, char **argv) {
   while (i = -1, c = getopt_long_only(argc, argv, "+hv", getopt_options, &i), c != -1) {
     /* TODO(sissel): handle args */
     switch (c) {
-      //case opt_ssl_ca_path:
-        //emitter_config.ssl_ca_path = strdup(optarg);
-        //break;
+      case opt_ssl_ca_path:
+        emitter_config.ssl_ca_path = strdup(optarg);
+        break;
+      case opt_ssl_certificate:
+        emitter_config.ssl_certificate = strdup(optarg);
+        break;
+      case opt_ssl_key:
+        emitter_config.ssl_key = strdup(optarg);
+        break;
       case opt_version:
         printf("version unknown. Could be awesome.\n");
         break;
@@ -164,9 +175,6 @@ int main(int argc, char **argv) {
       case opt_address:
         emitter_config.redis_address = strdup(optarg);
         break;
-      //case opt_port:
-        //emitter_config.port = (short)atoi(optarg);
-        //break;
       case opt_field:
         tmp = strchr(optarg, '=');
         if (tmp == NULL) {

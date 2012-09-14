@@ -60,8 +60,9 @@ void *emitter(void *arg) {
   struct timespec start;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  redis = redis_connect(config->redis_address);
+  /* TODO(sissel): if ssl settings are given, run stunnel. */
 
+  redis = redis_connect(config->redis_address);
   long count = 0, bytes = 0;
   for (;;) {
     /* Receive an event from a harvester and put it in the queue */

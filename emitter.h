@@ -11,6 +11,10 @@ struct emitter_config {
   //int redis_db;
   char *redis_key;
   char *redis_address; 
+
+  char *ssl_ca_path;
+  char *ssl_certificate;
+  char *ssl_key;
 };
 
 void *emitter(void *arg);
