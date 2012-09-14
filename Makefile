@@ -133,7 +133,7 @@ build/include/hiredis/hiredis.h build/lib/libhiredis.$(LIBEXT): | build/include 
 	@echo " => Building libhiredis"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/hiredis install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
-build/bin/stunnel: | build/bin build/lib
+build/bin/stunnel: | build/bin build/lib build/include
 	@echo " => Building stunnel"
 	PATH=$$PWD:$$PATH $(MAKE) -C vendor/stunnel install PREFIX=$$PWD/build DEBUG=$(DEBUG)
 
