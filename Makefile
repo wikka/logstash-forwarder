@@ -93,6 +93,9 @@ endif # hiredis
 build/bin/lumberjack.sh: lumberjack.sh | build/bin
 	install -m 755 $^ $@
 
+build/bin/stunnel.sh: stunnel.sh | build/bin
+	install -m 755 $^ $@
+
 build/bin/lumberjack: | build/bin
 build/bin/lumberjack: lumberjack.o backoff.o harvester.o emitter.o str.o proto.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
