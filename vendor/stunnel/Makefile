@@ -18,12 +18,12 @@ configure: | $(WORKDIR)/Makefile
 $(WORKDIR)/Makefile: | $(WORKDIR) 
 $(WORKDIR)/Makefile: $(PREFIX)/lib/libcrypto.$(LIBEXT) $(PREFIX)/lib/libssl.$(LIBEXT)
 $(WORKDIR)/Makefile: $(PREFIX)/include/openssl/ssl.h
-	cd $(WORKDIR); CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure --prefix=$(PREFIX) $(CONFIGURE_FLAGS)
+	cd $(WORKDIR); CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" CPPFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure --prefix=$(PREFIX) --with-ssl=$(PREFIX) $(CONFIGURE_FLAGS)
 
 compile: | $(WORKDIR)/src/stunnel
 $(WORKDIR)/src/stunnel: | configure
 $(WORKDIR)/src/stunnel:
-	$(MAKE) -C $(WORKDIR) CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE) -C $(WORKDIR) CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" CPPFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 install: | compile $(PREFIX)/lib $(PREFIX)/include
 install: $(PREFIX)/bin/stunnel
