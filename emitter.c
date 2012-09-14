@@ -32,7 +32,7 @@ static redisContext *redis_connect(const char *address) {
       printf("Failed to create a new redisContext\n");
       backoff(&sleeper);
     } else if (redis->err) {
-      printf("connection to redis failed: %s\n", redis->errstr);
+      printf("connection to redis failed (%s): %s\n", address, redis->errstr);
       redisFree(redis);
       redis = NULL;
       backoff(&sleeper);
