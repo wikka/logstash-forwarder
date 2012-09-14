@@ -47,7 +47,8 @@ rpm deb: | build-all
 		--exclude '*.a' --exclude 'lib/pkgconfig/zlib.pc' -C build \
 		--description "a log shipping tool" \
 		--url "https://github.com/jordansissel/lumberjack" \
-		bin/lumberjack bin/lumberjack.sh lib
+		bin/lumberjack bin/lumberjack.sh lib \
+		bin/stunnel bin/stunnel.sh
 
 backoff.o: backoff.c backoff.h
 harvester.o: harvester.c harvester.h proto.h str.h sleepdefs.h
