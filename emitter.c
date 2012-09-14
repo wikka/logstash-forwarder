@@ -62,7 +62,7 @@ void *emitter(void *arg) {
 
   redis = redis_connect(config->redis_address);
 
-  long count, bytes;
+  long count = 0, bytes = 0;
   for (;;) {
     /* Receive an event from a harvester and put it in the queue */
     zmq_msg_t message;
@@ -91,7 +91,7 @@ void *emitter(void *arg) {
     bytes += zmq_msg_size(&message);
     zmq_msg_close(&message);
 
-    if (count == 10000) {
+    if (count == 100000) {
       struct timespec now;
       clock_gettime(CLOCK_MONOTONIC, &now);
       double s = (start.tv_sec + 0.0) + (start.tv_nsec / 1000000000.0);
