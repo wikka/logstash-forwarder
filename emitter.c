@@ -1,4 +1,6 @@
+#include <sys/types.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdint.h> /* C99 for int64_t */
 #include <string.h>
 #include <unistd.h>
@@ -7,11 +9,65 @@
 #include "insist.h"
 #include "backoff.h"
 #include "clock_gettime.h"
+#include <unistd.h>
 #include <hiredis/hiredis.h>
 
 #include <sys/resource.h>
 
 #include "sleepdefs.h"
+
+static void run_stunnel(struct emitter_config *config, const char *socketpath) {
+  pid_t child;
+
+  /* Generate stunnel config */
+  int rc;
+  int in[2];
+  rc = pipe(in);
+  if (rc == -1) {
+    fprintf(stderr, "pipe(2) failed: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  child = fork();
+  if (child < 0) {
+    fprintf(stderr, "Failed to fork: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  if (child > 0) {
+    FILE *configfile = fdopen(in[1], "w");
+    fprintf(configfile, "compression = zlib\n");
+    fprintf(configfile, "foreground = yes\n");
+    fprintf(configfile, "pid = %s.pid\n", socketpath);
+    fprintf(configfile, "CAfile = %s\n", config->ssl_ca_path);
+
+    if (config->ssl_certificate != NULL) {
+      fprintf(configfile, "cert = %s\n", config->ssl_certificate);
+    }
+
+    if (config->ssl_key != NULL) {
+      fprintf(configfile, "key = %s\n", config->ssl_key);
+    }
+    fprintf(configfile, "options = NO_SSLv2\n");
+    //fprintf(configfile, "output = /dev/stdout\n");
+    fprintf(configfile, "client = yes\n");
+    fprintf(configfile, "syslog = no\n");
+    fprintf(configfile, "[redis-ssl]\n");
+    fprintf(configfile, "accept = %s\n", socketpath);
+    fprintf(configfile, "connect = %s\n", config->redis_address);
+    fclose(configfile);
+    close(in[0]);
+  } else {
+    close(in[1]);
+    dup2(in[0], 0); /* redirect stdin */
+    for (int i = 3; i < 10000; i++) { close(i); }
+    //execlp("cat", "cat", (char *)NULL);
+    execlp(config->stunnel_path, config->stunnel_path, "-fd", "0", (char *)NULL);
+    fprintf(stderr, "exec(%s) failed: %s\n", config->stunnel_path,
+            strerror(errno));
+    exit(1);
+  }
+} /* run_stunnel */
 
 static redisContext *redis_connect(const char *address) {
   struct backoff sleeper;
@@ -60,7 +116,25 @@ void *emitter(void *arg) {
   struct timespec start;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  /* TODO(sissel): if ssl settings are given, run stunnel. */
+  /* TODO(sissel): if ssl settings are given, run stunnel
+   *   - generate an stunnel config
+   *   - run stunnel as a child process
+   */
+  if (config->ssl_ca_path) {
+    /* We'll have stunnel talk to the redis address. 
+     * Create a temporary file that we'll use as a unix socket
+     * to have redis client talk through stunnel. */
+    char *tmpdir = getenv("TMP");
+    if (tmpdir == NULL) {
+      tmpdir = "/tmp";
+    }
+    char localsocket[100];
+    snprintf(localsocket, 100, "%s/redis-stunnel.%d.sock", tmpdir, getpid());
+    unlink(localsocket);
+    run_stunnel(config, localsocket);
+    sleep(30);
+    config->redis_address = localsocket;
+  }
 
   redis = redis_connect(config->redis_address);
   long count = 0, bytes = 0;
@@ -110,4 +184,3 @@ void *emitter(void *arg) {
     }
   } /* forever */
 } /* emitter */
-

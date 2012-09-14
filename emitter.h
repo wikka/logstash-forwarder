@@ -15,6 +15,7 @@ struct emitter_config {
   char *ssl_ca_path;
   char *ssl_certificate;
   char *ssl_key;
+  char *stunnel_path;
 };
 
 void *emitter(void *arg);
