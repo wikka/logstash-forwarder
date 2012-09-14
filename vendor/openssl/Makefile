@@ -17,7 +17,7 @@ endif
 
 #configure: #configure-autoconf
 configure: | $(WORKDIR)
-	(cd $(WORKDIR); ./config no-zlib no-krb5 enable-tlsext enable-camellia enable-mdc2 shared threads --prefix=$(PREFIX) --openssldir=$(PREFIX)/etc/ssl $(CONFIGFLAGS))
+	(cd $(WORKDIR); ./config no-krb5 enable-zlib enable-tlsext enable-camellia enable-mdc2 enable-ec shared threads --prefix=$(PREFIX) --openssldir=$(PREFIX)/etc/ssl $(CONFIGFLAGS))
 
 ifeq ($(UNAME),Darwin)
 # Use --disable-dependency-tracking otherwise llvm/clang crashes
