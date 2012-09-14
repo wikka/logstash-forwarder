@@ -27,11 +27,7 @@ $(WORKDIR)/src/.libs/libzmq.$(LIBEXT): | configure
 	$(MAKE) -C $(WORKDIR) CFLAGS=$(CFLAGS) CXXFLAGS=$(CXXFLAGS) LDFLAGS=$(LDFLAGS)
 
 install: | compile $(PREFIX)/lib $(PREFIX)/include
-ifeq ($(UNAME),Darwin)
-install: $(PREFIX)/lib/libzmq.1.$(LIBEXT) $(PREFIX)/lib/libzmq.$(LIBEXT)
-else
 install: $(PREFIX)/lib/libzmq.$(LIBEXT).1 $(PREFIX)/lib/libzmq.$(LIBEXT)
-endif
 install: $(PREFIX)/include/zmq.h $(PREFIX)/include/zmq_utils.h
 
 $(PREFIX)/lib/libzmq.$(LIBEXT).1: $(WORKDIR)/src/.libs/libzmq.$(LIBEXT)
